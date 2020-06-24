@@ -51,16 +51,20 @@ function create_segment(wave_count,difficulty)
 end
 
 function create_wave(difficulty) 
+  -- TODO implement difficulty
   new_wave={}
   if rnd(100)<=100 then
     -- GREEN FISH, does not shoot
+    local n = flr(rnd(difficulty))+2
     for i=1,n do
       local d = -1
       if rnd(1)<0.5 then d=1 end
       add(new_wave,{
+        hp=3,
         sp=16,
-        m_x=i*16,
-        m_y=-20-i*8,
+        y_speed=1.3,
+        m_x=((i%6)*(128/8))+20,
+        m_y=-16-i*4,
         d=d,
         x=-32,
         y=-32,
@@ -78,22 +82,7 @@ end
 --TODO actually use these waves
 
 function respawn()
- local n = flr(rnd(9))+2
- for i=1,n do
-  local d = -1
-  if rnd(1)<0.5 then d=1 end
- add(enemies, {
-  sp=16,
-  m_x=i*16,
-  m_y=-20-i*8,
-  d=d,
-  x=-32,
-  y=-32,
-  r=12,
-  box = {x1=0,y1=0,x2=7,y2=7}
- })
- end
-
+  enemies=create_wave(64)
 end
 
 
@@ -189,9 +178,9 @@ function update_shoot()
  end
  
  for e in all(enemies) do
-  e.m_y += 1.3
-  e.x = e.r*sin(e.d*t/50) + e.m_x
-  e.y = e.r*cos(t/50) + e.m_y
+  e.m_y += e.y_speed 
+  e.move_x(e)
+  e.move_y(e)
   if coll(ship,e) and not ship.imm then
     ship.imm = true
     ship.h -= 1
@@ -214,10 +203,14 @@ function update_shoot()
   end
   for e in all(enemies) do
    if coll(b,e) then
-    del(enemies,e)
-    ship.p += 1
+    e.hp-=1
+    del(bullets,b)
+    if(e.hp<=0)then
+      del(enemies,e)
+      ship.p += 1
+    end
     --TODO this is a temporary wincon
-    if(ship.p >= 5) then
+    if(ship.p >= 25) then
       _update=update_overworld
       _draw=draw_overworld
     end
